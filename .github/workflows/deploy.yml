@@ -1,52 +1,28 @@
-name: Deploy to GitHub Pages
+- name: Setup Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 18
+      cache: 'npm'
 
-on:
-  push:
-    branches: ["main"]
+  # STREAMING_CHUNK:Instalasi dependensi dan memasukkan variabel rahasia...
+  - name: Install Dependensi
+    run: npm install
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+  - name: Build Aplikasi (Vite)
+    # Menarik variabel URL dari GitHub Variables agar dikenali saat proses build
+    env:
+      VITE_GAS_WEB_APP_URL: ${{ vars.VITE_GAS_WEB_APP_URL }}
+    run: npm run build
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  # STREAMING_CHUNK:Upload dan Deploy ke GitHub Pages...
+  - name: Setup GitHub Pages
+    uses: actions/configure-pages@v4
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          # Baris cache dihapus agar robot tidak mencari package-lock.json
-          
-      - name: Install dependencies
-        run: npm install
-        
-      - name: Build
-        run: npm run build
-        
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
+  - name: Upload Artifact
+    uses: actions/upload-pages-artifact@v3
+    with:
+      path: './dist'
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  - name: Deploy ke GitHub Pages
+    id: deployment
+    uses: actions/deploy-pages@v4
